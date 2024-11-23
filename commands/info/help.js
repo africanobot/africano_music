@@ -1,44 +1,33 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, Events, EmbedBuilder } = require("discord.js");
+const { 
+    ActionRowBuilder, 
+    ButtonBuilder, 
+    ButtonStyle, 
+    EmbedBuilder 
+} = require("discord.js");
 const { glob } = require("glob");
 const { promisify } = require("util");
 const { prefix } = require('../../config.json');
 const { Utils } = require("devtools-ts");
+
 const utilites = new Utils();
 
 module.exports = {
     name: "help",
-    description: 'Feeling lost?',
+    description: "Feeling lost?",
     cooldown: 5000,
     async execute(client, message, args) {
         try {
+            // Promisify glob to use async/await
             const globPromise = promisify(glob);
             const commandFiles = await globPromise(`${process.cwd()}/commands/music/**/*.js`);
 
-            let embed = new EmbedBuilder()
-            .setThumbnail(client.user.displayAvatarURL({ dynamic: true }))
-            /*
-                            .addFields(
-                                { name: `${prefix}247`, value: `Toggles the 24/7 mode. This makes the bot doesn't leave the voice channel until you stop it.`, inline: false },
-                                { name: `${prefix}autoplay`, value: `Toggles autoplay for the current guild.`, inline: false },
-                                { name: `${prefix}join`, value: `join the voice channel.`, inline: false },
-                                { name: `${prefix}jump`, value: `Skip to a song in the queue.`, inline: false },
-                                { name: `${prefix}leave`, value: `leave the voice channel.`, inline: false },
-                                { name: `${prefix}loop`, value: `Toggles the repeat mode.`, inline: false },
-                                { name: `${prefix}lyrics`, value: `Display lyrics of a song`, inline: false },
-                                { name: `${prefix}nowplaying`, value: `Shows what is song that the bot is currently playing.`, inline: false },
-                                { name: `${prefix}pause`, value: `Pauses the currently playing track.`, inline: false },
-                                { name: `${prefix}play`, value: `Add a song to queue and plays it.`, inline: false },
-                                { name: `${prefix}previous`, value: `Plays the previous song in the queue.`, inline: false },
-                                { name: `${prefix}queue`, value: `Display the queue of the current tracks in the playlist.`, inline: false },
-                                { name: `${prefix}resume`, value: `Resumes the currently paused track.`, inline: false },
-                                { name: `${prefix}search`, value: `Search song and play music.`, inline: false },
-                                { name: `${prefix}seek`, value: `Seeks to a certain point in the current track.`, inline: false },
-                                { name: `${prefix}shuffle`, value: `Shuffle the queue.`, inline: false },
-                                { name: `${prefix}skip`, value: `Skip the current song.`, inline: false },
-                                { name: `${prefix}stop`, value: `Stop the current song and clears the entire music queue.`, inline: false },
-                                { name: `${prefix}volume`, value: `Changes/Shows the current volume.`, inline: false },
-                                )
-            */
+            // Initialize the embed
+            const embed = new EmbedBuilder()
+                .setThumbnail(client.user.displayAvatarURL({ dynamic: true }))
+                .setTitle("Help Menu")
+                .setDescription("List of available commands:");
+
+            // Loop through command files and add them to the embed
             commandFiles.map((value) => {
                 const file = require(value);
                 const splitted = value.split("/");
@@ -46,26 +35,39 @@ module.exports = {
 
                 if (file.name) {
                     const properties = { directory, ...file };
-                    embed.addFields({ name: `${prefix}${properties.name}`, value: `${properties.description}`, inline: false })
+                    embed.addFields({
+                        name: `${prefix}${properties.name}`,
+                        value: properties.description || "No description provided.",
+                        inline: false
+                    });
                 }
             });
 
-            let row = new ActionRowBuilder()
+            // Create buttons
+            const row = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
                         .setStyle(ButtonStyle.Link)
-                        .setLabel('Invite Bot')
-                        .setURL(``))
-
+                        .setLabel("Invite Bot")
+                        .setURL(`https://your-invite-link.com`)
+                )
                 .addComponents(
                     new ButtonBuilder()
                         .setStyle(ButtonStyle.Link)
-                        .setLabel('Server Support')
-                        .setURL(`https://discord.gg/angelsrp`))
+                        .setLabel("Server Support")
+                        .setURL("https://discord.gg/angelsrp")
+                );
 
-            message.reply({ embeds: [embed], components: [row] })
+            // Send the embed and buttons as a reply
+            await message.reply({ embeds: [embed], components: [row] });
         } catch (err) {
-            console.log(err)
+            console.error("Error executing help command:", err);
+
+            // Send error message to the user (optional)
+            message.reply({
+                content: "An error occurred while executing the help command. Please try again later.",
+                ephemeral: true
+            });
         }
     },
 };
